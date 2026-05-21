@@ -40,7 +40,7 @@ fun main() {
             json()
         }
 
-        // 3. TARCZA OCHRONNA: Instalujemy limitowanie zapytań!
+        // 3. TARCZA OCHRONNA: Instalujemy limitowanie zapytań (Rate Limiting z Wykładu 7)
         install(RateLimit) {
             register(RateLimitName("ochrona_bazy")) {
                 // Ustawiamy rygorystyczny limit: 3 zgłoszenia na 60 sekund
@@ -49,7 +49,7 @@ fun main() {
         }
 
         routing {
-            // Wstrzykujemy trasy, które oddelegowaliśmy do pliku CityRoutes.kt
+            // Wstrzykujemy trasy
             cityRouting()
         }
     }.start(wait = true)

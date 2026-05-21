@@ -13,17 +13,16 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.io.File
 
-// Przeniesiona w całości logika tras
 fun Route.cityRouting() {
 
     get("/") {
         call.respondText("API z Bazą Danych działa!")
     }
 
-    // Serwowanie zdjęć z dysku C
+    // Serwowanie zdjęć
     staticFiles("/", File("C:\\miasta"))
 
-    // ODCZYT: Wysłanie pełnej bazy do telefonu
+    // ODCZYT (Brak limitu - chcemy, żeby telefony mogły swobodnie odczytywać mapę)
     get("/cities") {
         val citiesFromDb = DatabaseFactory.getAllCities()
         call.respond(citiesFromDb)
@@ -31,21 +30,18 @@ fun Route.cityRouting() {
 
     // ZAPIS: Odbieranie nowych lokalizacji
     // 🛡️ TARCZA NR 1: Ochrona przed spamem (Rate Limit)
-    // Obejmujemy cały blok POST naszą regułą "ochrona_bazy" zdefiniowaną w Server.kt
     rateLimit(RateLimitName("ochrona_bazy")) {
 
         post("/cities") {
-            // 🛡️ TARCZA NR 2: BRAMKA BEZPIECZEŃSTWA (Autoryzacja z Wykładu 7)
+            // 🛡️ TARCZA NR 2: BRAMKA BEZPIECZEŃSTWA (Autoryzacja - Elektroniczna Legitymacja)
             val authHeader = call.request.headers["Authorization"]
 
-            // Sprawdzamy, czy aplikacja przysłała odpowiednią legitymację
             if (authHeader != "Bearer TajnaGeodezja2026") {
-                // Jeśli hasło się nie zgadza, odrzucamy intruza statusem 401 Unauthorized!
                 call.respond(HttpStatusCode.Unauthorized, "Odmowa dostępu! Błędna legitymacja.")
-                return@post // Przerywamy działanie funkcji, kod poniżej się nie wykona
+                return@post
             }
 
-            // Jeśli hasło jest poprawne i limit nie został przekroczony, przepuszczamy paczkę dalej
+            // Jeśli hasło jest poprawne i limit nie został przekroczony (jesteśmy poniżej 3 prób/minutę)
             val newCity = call.receive<CityRequest>()
 
             DatabaseFactory.addCity(
