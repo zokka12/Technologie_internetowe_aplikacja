@@ -11,6 +11,9 @@ object Cities : Table() {
     val safetyRating = double("safetyRating")
     val foodRating = double("foodRating")
 
+    // NOWOŚĆ: Dodana kolumna statusu. Domyślna wartość to "NONE" (Brak statusu)
+    val status = varchar("status", 50).default("NONE")
+
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -19,7 +22,8 @@ object DatabaseFactory {
         Database.connect("jdbc:sqlite:./data.db", "org.sqlite.JDBC")
 
         transaction {
-            // USUNIĘTE: SchemaUtils.drop(Cities) - baza już się nie kasuje przy starcie!
+            // UWAGA INŻYNIERSKA: Przy pierwszej zmianie struktury tabeli (dodaniu kolumny),
+            // stara baza może zgłosić błąd. Zobacz instrukcję pod kodem!
             SchemaUtils.create(Cities)
 
             if (Cities.selectAll().empty()) {
@@ -37,7 +41,8 @@ object DatabaseFactory {
         }
     }
 
-    fun addCity(name: String, url: String, attr: Double, safe: Double, food: Double) {
+    // NOWOŚĆ: Dodany parametr cityStatus z domyślną wartością "NONE"
+    fun addCity(name: String, url: String, attr: Double, safe: Double, food: Double, cityStatus: String = "NONE") {
         transaction {
             Cities.insert {
                 it[cityName] = name
@@ -45,6 +50,7 @@ object DatabaseFactory {
                 it[attractionsRating] = attr
                 it[safetyRating] = safe
                 it[foodRating] = food
+                it[status] = cityStatus
             }
         }
     }
@@ -57,8 +63,25 @@ object DatabaseFactory {
                 imageUrl = it[Cities.imageUrl],
                 attractionsRating = it[Cities.attractionsRating],
                 safetyRating = it[Cities.safetyRating],
-                foodRating = it[Cities.foodRating]
+                foodRating = it[Cities.foodRating],
+                status = it[Cities.status] // NOWOŚĆ: Mapowanie statusu z bazy do paczki
             )
         }
+    }
+
+    // NOWOŚĆ: Funkcja do chirurgicznej aktualizacji ocen i statusów (bramka PATCH)
+    fun updateCity(id: String, newAttr: Double?, newSafe: Double?, newFood: Double?, newStatus: String?): Boolean {
+        var updatedRows = 0
+        transaction {
+            // Przerabiamy id ze Stringa na Int, żeby zgadzało się z bazą danych
+            updatedRows = Cities.update({ Cities.id eq id.toInt() }) { row ->
+                // Modyfikujemy tylko te oceny na 10, które zostały przysłane
+                newAttr?.let { row[attractionsRating] = it }
+                newSafe?.let { row[safetyRating] = it }
+                newFood?.let { row[foodRating] = it }
+                newStatus?.let { row[status] = it }
+            }
+        }
+        return updatedRows > 0 // Jeśli zaktualizowano co najmniej 1 wiersz, zwraca true
     }
 }
