@@ -1,5 +1,6 @@
 package pl.zosiaqucz.technologieinternetowe.data.network
 
+import io.ktor.client.request.patch
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -16,6 +17,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 object ApiClient {
+    private const val SERVER_IP = "10.0.2.2"
     val client = HttpClient {
         install(ContentNegotiation) {
             json(Json {
@@ -68,6 +70,29 @@ object ApiClient {
             null
         }
     }
+    // Funkcja do aktualizacji ocen i statusu z poziomu suwaków i checkboxów
+    suspend fun updateCityDetails(
+        id: String,
+        attractions: Double? = null,
+        safety: Double? = null,
+        food: Double? = null,
+        status: String? = null
+    ): Boolean {
+        return try {
+            // Ścieżka z ID miasta na końcu (np. /cities/1)
+            val response = client.patch("http://$SERVER_IP:8080/cities/$id") {
+                contentType(ContentType.Application.Json)
+                // 🛡️ BRAMKA BEZPIECZEŃSTWA
+                header("Authorization", "Bearer TajnaGeodezja2026")
+                // Pakujemy tylko te dane, które użytkownik zmienił
+                setBody(CityUpdateRequest(attractions, safety, food, status))
+            }
+            response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }
 
 @Serializable
@@ -89,4 +114,12 @@ data class GeocodingResponse(
 data class GeocodingResult(
     val latitude: Double,
     val longitude: Double
+)
+
+@Serializable
+data class CityUpdateRequest(
+    val attractionsRating: Double? = null,
+    val safetyRating: Double? = null,
+    val foodRating: Double? = null,
+    val status: String? = null
 )

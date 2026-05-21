@@ -1,5 +1,6 @@
 package pl.zosiaqucz.server
 
+import io.ktor.server.routing.patch
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.http.content.staticFiles
@@ -55,5 +56,41 @@ fun Route.cityRouting() {
             call.respond(HttpStatusCode.Created, "Zapisano nowe miasto z prawidłowymi ocenami!")
         }
 
-    } // <-- Koniec klamry rateLimit
+    }
+    // <-- Koniec klamry rateLimit
+    // AKTUALIZACJA: Zmiana oceny na 10 lub statusu miasta
+    patch("/cities/{id}") {
+        // 1. Sprawdzamy legitymację bezpieczeństwa
+        val authHeader = call.request.headers["Authorization"]
+        if (authHeader != "Bearer TajnaGeodezja2026") {
+            call.respond(HttpStatusCode.Unauthorized, "Odmowa dostępu!")
+            return@patch
+        }
+
+        // 2. Pobieramy ID miasta z adresu URL
+        val cityId = call.parameters["id"]
+        if (cityId == null) {
+            call.respond(HttpStatusCode.BadRequest, "Brak ID miasta!")
+            return@patch
+        }
+
+        // 3. Odbieramy tylko te pola, które chcemy zaktualizować
+        val updateData = call.receive<CityUpdateRequest>()
+
+        // 4. Przekazujemy zmiany do bazy danych
+        val success = DatabaseFactory.updateCity(
+            id = cityId,
+            newAttr = updateData.attractionsRating,
+            newSafe = updateData.safetyRating,
+            newFood = updateData.foodRating,
+            newStatus = updateData.status
+        )
+
+        if (success) {
+            call.respond(HttpStatusCode.OK, "Oceny/status zaktualizowane pomyślnie!")
+        } else {
+            call.respond(HttpStatusCode.NotFound, "Nie znaleziono miasta o podanym ID.")
+        }
+    }
+
 }

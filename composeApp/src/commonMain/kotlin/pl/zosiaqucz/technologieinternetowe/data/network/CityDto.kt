@@ -9,5 +9,6 @@ data class CityDto(
     val imageUrl: String,
     val attractionsRating: Double,
     val safetyRating: Double,
-    val foodRating: Double
+    val foodRating: Double,
+    val status: String = "NONE"
 )

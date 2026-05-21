@@ -18,7 +18,8 @@ data class ServerCity(
     val imageUrl: String,
     val attractionsRating: Double,
     val safetyRating: Double,
-    val foodRating: Double
+    val foodRating: Double,
+    val status: String // NOWOŚĆ: np. "VISITED", "TO_SEE"
 )
 
 @Serializable
@@ -27,7 +28,17 @@ data class CityRequest(
     val imageUrl: String,
     val attractionsRating: Double,
     val safetyRating: Double,
-    val foodRating: Double
+    val foodRating: Double,
+    val status: String // Podczas dodawania od razu ustalamy status
+)
+
+// NOWOŚĆ: Paczka do metody PATCH (wszystko jest opcjonalne)
+@Serializable
+data class CityUpdateRequest(
+    val attractionsRating: Double? = null,
+    val safetyRating: Double? = null,
+    val foodRating: Double? = null,
+    val status: String? = null
 )
 
 fun main() {
