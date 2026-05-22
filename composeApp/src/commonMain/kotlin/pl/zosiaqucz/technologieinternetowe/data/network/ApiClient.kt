@@ -27,31 +27,28 @@ object ApiClient {
     }
 
     suspend fun fetchCities(): List<CityDto> {
-        return client.get("http://10.0.2.2:8080/cities").body()
+        // 🔴 ZMIANA: Pobieranie z v1
+        return client.get("http://$SERVER_IP:8080/v1/cities").body()
     }
 
     suspend fun addCity(cityName: String, imageUrl: String, attractions: Double, safety: Double, food: Double): Boolean {
         return try {
-            val response = client.post("http://10.0.2.2:8080/cities") {
+            // 🔴 ZMIANA: Wysyłanie do v1
+            val response = client.post("http://$SERVER_IP:8080/v1/cities") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer TajnaGeodezja2026")
-
-                // Wysyłamy konkretnie to:
                 setBody(CityRequest(cityName, imageUrl, attractions, safety, food, "NONE"))
             }
-            // Jeśli serwer zwróci 201 lub 200, jest sukces
             response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
             false
         }
     }
 
-    // 4. POBIERANIE WSPÓŁRZĘDNYCH: Zmieniliśmy dostawcę na stabilniejsze Open-Meteo Geocoding!
+    // POBIERANIE WSPÓŁRZĘDNYCH (Zostaje bez zmian, używa API zewnętrznego)
     suspend fun getCityCoordinates(cityName: String): Pair<String, String>? {
         return try {
             val cleanCityName = cityName.trim()
-
-            // Łączymy się z nowym, odpornym na blokady serwerem
             val response: GeocodingResponse = client.get("https://geocoding-api.open-meteo.com/v1/search") {
                 parameter("name", cleanCityName)
                 parameter("count", "1")
@@ -59,7 +56,6 @@ object ApiClient {
                 parameter("format", "json")
             }.body()
 
-            // Wyciągamy z JSON-a rygorystyczne stopnie
             val results = response.results
             if (results != null && results.isNotEmpty()) {
                 Pair(results[0].latitude.toString(), results[0].longitude.toString())
@@ -70,7 +66,7 @@ object ApiClient {
         }
     }
 
-    // Funkcja do aktualizacji ocen i statusu z poziomu suwaków i checkboxów
+    // AKTUALIZACJA STOPNI (PATCH)
     suspend fun updateCityDetails(
         id: String,
         attractions: Double? = null,
@@ -79,15 +75,14 @@ object ApiClient {
         status: String? = null
     ): Boolean {
         return try {
-            // Ścieżka z ID miasta na końcu (np. /cities/1)
-            val response = client.patch("http://$SERVER_IP:8080/cities/$id") {
+            // 🔴 ZMIANA: Ścieżka z /v1/
+            val response = client.patch("http://$SERVER_IP:8080/v1/cities/$id") {
                 contentType(ContentType.Application.Json)
-                // 🛡️ BRAMKA BEZPIECZEŃSTWA
                 header("Authorization", "Bearer TajnaGeodezja2026")
-                // Pakujemy tylko te dane, które użytkownik zmienił
                 setBody(CityUpdateRequest(attractions, safety, food, status))
             }
-            response.status == HttpStatusCode.OK
+            // 🟢 ZMIANA: Obsługa kodu HttpStatusCode.NoContent (204) zwracanego przez serwer
+            response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
             e.printStackTrace()
             false
@@ -105,7 +100,6 @@ data class CityRequest(
     val status: String = "NONE"
 )
 
-// Nowe klasy pomocnicze dla Open-Meteo API
 @Serializable
 data class GeocodingResponse(
     val results: List<GeocodingResult>? = null
