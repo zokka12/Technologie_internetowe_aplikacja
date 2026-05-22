@@ -11,7 +11,11 @@ import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.plugins.ratelimit.RateLimitName
 import pl.zosiaqucz.server.infrastructure.DatabaseFactory
 import kotlin.time.Duration.Companion.seconds
-import pl.zosiaqucz.server.infrastructure.CityRepositoryImpl
+
+
+import org.koin.ktor.plugin.Koin
+import org.koin.ktor.ext.inject
+import pl.zosiaqucz.server.di.appModule
 import pl.zosiaqucz.server.domain.UpdateCityUseCase
 
 @Serializable
@@ -48,12 +52,14 @@ fun main() {
     // 1. Inicjalizacja bazy danych
     DatabaseFactory.init()
 
-    val repository = CityRepositoryImpl()
-
-    val updateCityUseCase = UpdateCityUseCase(repository)
-
     // 2. Konfiguracja i start serwera na porcie 8080
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+
+        // 🏗️ INSTALACJA KOINA: Przekazujemy nasz "przepis" z pliku AppModule.kt
+        install(Koin) {
+            modules(appModule)
+        }
+
         install(ContentNegotiation) {
             json()
         }
@@ -66,8 +72,11 @@ fun main() {
             }
         }
 
+        // 🪄 MAGIA KOINA: Automatycznie prosimy system o dostarczenie narzędzia do aktualizacji stopni
+        val updateCityUseCase by inject<UpdateCityUseCase>()
+
         routing {
-            // Wstrzykujemy trasy
+            // Wstrzykujemy trasy, przekazując gotowe narzędzie
             cityRouting(updateCityUseCase)
         }
     }.start(wait = true)
