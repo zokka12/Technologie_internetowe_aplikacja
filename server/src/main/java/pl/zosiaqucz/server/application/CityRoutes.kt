@@ -12,6 +12,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.ktor.server.plugins.swagger.swaggerUI
 import pl.zosiaqucz.server.infrastructure.DatabaseFactory
 import pl.zosiaqucz.server.domain.UpdateCityUseCase
 import java.io.File
@@ -22,10 +23,13 @@ fun Route.cityRouting(updateCityUseCase: UpdateCityUseCase) {
         call.respondText("API Geodezyjne z architekturą warstwową (v1) działa!")
     }
 
+    // 🏗️ NOWOŚĆ: Uruchamiamy panel dokumentacji dla naszych stopni pod adresem /swagger
+    swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
+
     // Serwowanie zdjęć
     staticFiles("/", File("C:\\miasta"))
 
-    // 🏗️ NOWOŚĆ: Grupujemy wszystkie ścieżki pod parasolem /v1
+    // Grupujemy wszystkie geodezyjne ścieżki pod parasolem /v1
     route("/v1") {
 
         // ODCZYT (Wyraźny kod 200 OK) -> Adres: /v1/cities

@@ -17,6 +17,8 @@ dependencies {
     implementation("io.ktor:ktor-server-rate-limit-jvm:3.4.1")
     implementation("io.insert-koin:koin-ktor:3.5.3") // Wersja może się delikatnie różnić zależnie od Twoich notatek z wykładu
     implementation("io.insert-koin:koin-logger-slf4j:3.5.3")
+    // Wtyczka do dokumentacji API (Swagger)
+    implementation("io.ktor:ktor-server-swagger:3.4.1") // Zmień 2.3.7 na wersję, którą masz w innych paczkach io.ktor
 }
 
 java {

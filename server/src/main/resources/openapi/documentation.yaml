@@ -1,0 +1,47 @@
+openapi: "3.0.0"
+info:
+  title: "API Geodezyjne"
+  description: "System do zarządzania punktami pomiarowymi i oceną stopni terenu."
+  version: "v1"
+servers:
+  - url: "http://10.0.2.2:8080/v1"
+    description: "Lokalny serwer geodezyjny"
+paths:
+  /cities:
+    get:
+      summary: "Pobierz wszystkie punkty"
+      responses:
+        '200':
+          description: "Lista punktów pomiarowych zwrócona pomyślnie"
+    post:
+      summary: "Dodaj nowy punkt pomiarowy"
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: "Punkt geodezyjny zapisany pomyślnie"
+        '401':
+          description: "Odmowa dostępu (brak legitymacji)"
+  /cities/{id}:
+    patch:
+      summary: "Zaktualizuj stopnie i oceny terenu"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: "Stopnie zaktualizowane pomyślnie (No Content)"
+        '404':
+          description: "Nie znaleziono punktu"
+        '422':
+          description: "Błędne dane lub brak ID"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
