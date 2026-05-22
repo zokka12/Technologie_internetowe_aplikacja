@@ -1,7 +1,8 @@
-package pl.zosiaqucz.server
+package pl.zosiaqucz.server.infrastructure
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import pl.zosiaqucz.server.application.ServerCity
 
 object Cities : Table() {
     val id = integer("id").autoIncrement()

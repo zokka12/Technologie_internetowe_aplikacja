@@ -1,8 +1,7 @@
-package pl.zosiaqucz.server
+package pl.zosiaqucz.server.application
 
 import io.ktor.server.routing.patch
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
 import io.ktor.server.http.content.staticFiles
 import io.ktor.server.plugins.ratelimit.RateLimitName
 import io.ktor.server.plugins.ratelimit.rateLimit
@@ -12,9 +11,12 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import pl.zosiaqucz.server.infrastructure.DatabaseFactory
+import pl.zosiaqucz.server.domain.UpdateCityUseCase // 🔴 DODANY IMPORT (upewnij się, że paczka się zgadza!)
 import java.io.File
 
-fun Route.cityRouting() {
+// 🔴 ZMIANA 1: Nasz routing wymaga teraz narzędzia UpdateCityUseCase
+fun Route.cityRouting(updateCityUseCase: UpdateCityUseCase) {
 
     get("/") {
         call.respondText("API z Bazą Danych działa!")
@@ -23,18 +25,15 @@ fun Route.cityRouting() {
     // Serwowanie zdjęć
     staticFiles("/", File("C:\\miasta"))
 
-    // ODCZYT (Brak limitu - chcemy, żeby telefony mogły swobodnie odczytywać mapę)
+    // ODCZYT (Na razie zostawiamy tutaj stare zapytanie, potem to też "wyczyścimy")
     get("/cities") {
         val citiesFromDb = DatabaseFactory.getAllCities()
         call.respond(citiesFromDb)
     }
 
-    // ZAPIS: Odbieranie nowych lokalizacji
-    // 🛡️ TARCZA NR 1: Ochrona przed spamem (Rate Limit)
+    // ZAPIS
     rateLimit(RateLimitName("ochrona_bazy")) {
-
         post("/cities") {
-            // 🛡️ TARCZA NR 2: BRAMKA BEZPIECZEŃSTWA (Autoryzacja - Elektroniczna Legitymacja)
             val authHeader = call.request.headers["Authorization"]
 
             if (authHeader != "Bearer TajnaGeodezja2026") {
@@ -42,7 +41,6 @@ fun Route.cityRouting() {
                 return@post
             }
 
-            // Jeśli hasło jest poprawne i limit nie został przekroczony (jesteśmy poniżej 3 prób/minutę)
             val newCity = call.receive<CityRequest>()
 
             DatabaseFactory.addCity(
@@ -55,9 +53,8 @@ fun Route.cityRouting() {
 
             call.respond(HttpStatusCode.Created, "Zapisano nowe miasto z prawidłowymi ocenami!")
         }
-
     }
-    // <-- Koniec klamry rateLimit
+
     // AKTUALIZACJA: Zmiana oceny na 10 lub statusu miasta
     patch("/cities/{id}") {
         // 1. Sprawdzamy legitymację bezpieczeństwa
@@ -77,13 +74,14 @@ fun Route.cityRouting() {
         // 3. Odbieramy tylko te pola, które chcemy zaktualizować
         val updateData = call.receive<CityUpdateRequest>()
 
-        // 4. Przekazujemy zmiany do bazy danych
-        val success = DatabaseFactory.updateCity(
+        // 🔴 ZMIANA 2: ZAMIAST DATABASEFACTORY, UŻYWAMY NASZEGO CZYSTEGO USE CASE'A!
+        // Używamy "Elvis operatora" (?:), żeby upewnić się, że nie wysyłamy pustych wartości (null) do funkcji
+        val success = updateCityUseCase.execute(
             id = cityId,
-            newAttr = updateData.attractionsRating,
-            newSafe = updateData.safetyRating,
-            newFood = updateData.foodRating,
-            newStatus = updateData.status
+            attractions = updateData.attractionsRating ?: 0.0,
+            safety = updateData.safetyRating ?: 0.0,
+            food = updateData.foodRating ?: 0.0,
+            status = updateData.status ?: "NONE"
         )
 
         if (success) {
@@ -92,5 +90,4 @@ fun Route.cityRouting() {
             call.respond(HttpStatusCode.NotFound, "Nie znaleziono miasta o podanym ID.")
         }
     }
-
 }
