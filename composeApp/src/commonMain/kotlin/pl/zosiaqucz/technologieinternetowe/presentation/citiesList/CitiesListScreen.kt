@@ -98,9 +98,16 @@ fun CitiesListScreen(viewModel: CitiesListViewModel = viewModel { CitiesListView
         }
 
         // --- Zakładki ---
-        TabRow(selectedTabIndex = selectedTabIndex) {
+        ScrollableTabRow(
+            selectedTabIndex = selectedTabIndex,
+            edgePadding = 0.dp // Usuwa pusty margines po lewej stronie
+        ) {
             tabs.forEachIndexed { index, title ->
-                Tab(selected = selectedTabIndex == index, onClick = { selectedTabIndex = index }, text = { Text(title) })
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(title) }
+                )
             }
         }
 
