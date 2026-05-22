@@ -19,7 +19,7 @@ object Cities : Table() {
 
 object DatabaseFactory {
     fun init() {
-        Database.connect("jdbc:sqlite:./data.db", "org.sqlite.JDBC")
+        Database.connect("jdbc:sqlite:C:/data_technologie/data.db", "org.sqlite.JDBC")
 
         transaction {
             // UWAGA INŻYNIERSKA: Przy pierwszej zmianie struktury tabeli (dodaniu kolumny),

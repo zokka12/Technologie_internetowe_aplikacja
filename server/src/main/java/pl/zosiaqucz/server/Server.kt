@@ -29,7 +29,7 @@ data class CityRequest(
     val attractionsRating: Double,
     val safetyRating: Double,
     val foodRating: Double,
-    val status: String // Podczas dodawania od razu ustalamy status
+    val status: String = "NONE" // Podczas dodawania od razu ustalamy status
 )
 
 // NOWOŚĆ: Paczka do metody PATCH (wszystko jest opcjonalne)

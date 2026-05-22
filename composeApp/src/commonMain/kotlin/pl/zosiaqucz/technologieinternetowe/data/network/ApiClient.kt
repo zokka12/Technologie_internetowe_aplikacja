@@ -34,15 +34,14 @@ object ApiClient {
         return try {
             val response = client.post("http://10.0.2.2:8080/cities") {
                 contentType(ContentType.Application.Json)
-
-                // KLUCZOWA ZMIANA: Dołączamy elektroniczną legitymację (Autoryzację) do wysyłanej paczki!
                 header("Authorization", "Bearer TajnaGeodezja2026")
 
-                setBody(CityRequest(cityName, imageUrl, attractions, safety, food))
+                // Wysyłamy konkretnie to:
+                setBody(CityRequest(cityName, imageUrl, attractions, safety, food, "NONE"))
             }
-            response.status == HttpStatusCode.Created
+            // Jeśli serwer zwróci 201 lub 200, jest sukces
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
-            e.printStackTrace()
             false
         }
     }
@@ -70,6 +69,7 @@ object ApiClient {
             null
         }
     }
+
     // Funkcja do aktualizacji ocen i statusu z poziomu suwaków i checkboxów
     suspend fun updateCityDetails(
         id: String,
@@ -101,7 +101,8 @@ data class CityRequest(
     val imageUrl: String,
     val attractionsRating: Double,
     val safetyRating: Double,
-    val foodRating: Double
+    val foodRating: Double,
+    val status: String = "NONE"
 )
 
 // Nowe klasy pomocnicze dla Open-Meteo API
