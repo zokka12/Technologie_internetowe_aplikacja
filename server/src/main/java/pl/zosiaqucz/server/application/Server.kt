@@ -39,7 +39,7 @@ data class CityRequest(
     val status: String = "NONE" // Podczas dodawania od razu ustalamy status
 )
 
-// NOWOŚĆ: Paczka do metody PATCH (wszystko jest opcjonalne)
+
 @Serializable
 data class CityUpdateRequest(
     val attractionsRating: Double? = null,
@@ -55,7 +55,6 @@ fun main() {
     // 2. Konfiguracja i start serwera na porcie 8080
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
 
-        // 🏗️ INSTALACJA KOINA: Przekazujemy nasz "przepis" z pliku AppModule.kt
         install(Koin) {
             modules(appModule)
         }
@@ -72,7 +71,7 @@ fun main() {
             }
         }
 
-        // 🪄 MAGIA KOINA: Automatycznie prosimy system o dostarczenie narzędzia do aktualizacji stopni
+
         val updateCityUseCase by inject<UpdateCityUseCase>()
 
         routing {

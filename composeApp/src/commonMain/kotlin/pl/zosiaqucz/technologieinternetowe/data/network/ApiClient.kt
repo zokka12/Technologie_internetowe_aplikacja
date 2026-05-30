@@ -17,24 +17,18 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 object ApiClient {
-    private const val SERVER_IP = "10.0.2.2"
-    val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-            })
-        }
-    }
+    val client = HttpClientProvider.httpClient
+
 
     suspend fun fetchCities(): List<CityDto> {
-        // 🔴 ZMIANA: Pobieranie z v1
-        return client.get("http://$SERVER_IP:8080/v1/cities").body()
+        //  ZMIANA: Pobieranie z v1
+        return client.get(urlString = "/v1/cities").body()
     }
 
     suspend fun addCity(cityName: String, imageUrl: String, attractions: Double, safety: Double, food: Double): Boolean {
         return try {
-            // 🔴 ZMIANA: Wysyłanie do v1
-            val response = client.post("http://$SERVER_IP:8080/v1/cities") {
+            //  ZMIANA: Wysyłanie do v1
+            val response = client.post(urlString = "/v1/cities") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer TajnaGeodezja2026")
                 setBody(CityRequest(cityName, imageUrl, attractions, safety, food, "NONE"))
@@ -75,13 +69,12 @@ object ApiClient {
         status: String? = null
     ): Boolean {
         return try {
-            // 🔴 ZMIANA: Ścieżka z /v1/
-            val response = client.patch("http://$SERVER_IP:8080/v1/cities/$id") {
+
+            val response = client.patch(urlString = "/v1/cities/$id") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer TajnaGeodezja2026")
                 setBody(CityUpdateRequest(attractions, safety, food, status))
             }
-            // 🟢 ZMIANA: Obsługa kodu HttpStatusCode.NoContent (204) zwracanego przez serwer
             response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
             e.printStackTrace()

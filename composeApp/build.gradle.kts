@@ -58,6 +58,7 @@ kotlin {
             implementation(libs.kotlin.test)
         }
         jvmMain.dependencies {
+            implementation("io.ktor:ktor-client-logging:3.4.1")
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("io.ktor:ktor-client-okhttp:3.4.1")

@@ -23,7 +23,6 @@ fun Route.cityRouting(updateCityUseCase: UpdateCityUseCase) {
         call.respondText("API Geodezyjne z architekturą warstwową (v1) działa!")
     }
 
-    // 🏗️ NOWOŚĆ: Uruchamiamy panel dokumentacji dla naszych stopni pod adresem /swagger
     swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
 
     // Serwowanie zdjęć
@@ -41,6 +40,7 @@ fun Route.cityRouting(updateCityUseCase: UpdateCityUseCase) {
         // ZAPIS: Odbieranie nowych punktów pomiarowych -> Adres: /v1/cities
         rateLimit(RateLimitName("ochrona_bazy")) {
             post("/cities") {
+                // czy jest całą autoryzacja
                 val authHeader = call.request.headers["Authorization"]
 
                 if (authHeader != "Bearer TajnaGeodezja2026") {
@@ -71,6 +71,7 @@ fun Route.cityRouting(updateCityUseCase: UpdateCityUseCase) {
             }
 
             val cityId = call.parameters["id"]
+            //  TUTAJ! Kod 422 (Unprocessable Entity) - jeśli system nie dostanie ID punktu
             if (cityId == null) {
                 call.respond(HttpStatusCode.UnprocessableEntity)
                 return@patch
@@ -87,9 +88,10 @@ fun Route.cityRouting(updateCityUseCase: UpdateCityUseCase) {
             )
 
             if (success) {
-                // 🟢 204 No Content - Zaktualizowano stopnie pomyślnie
+                // 204 No Content - Zaktualizowano stopnie pomyślnie
                 call.respond(HttpStatusCode.NoContent)
             } else {
+                // TUTAJ! Kod 404 (Not Found) - jeśli ktoś chciał zmienić punkt, którego nie ma w bazie
                 call.respond(HttpStatusCode.NotFound)
             }
         }
